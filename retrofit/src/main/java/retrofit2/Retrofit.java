@@ -64,16 +64,18 @@ public final class Retrofit {
   final HttpUrl baseUrl;
   final List<Converter.Factory> converterFactories;
   final List<CallAdapter.Factory> callAdapterFactories;
+  final List<SuspendCallAdapter.Factory> suspendCallAdapterFactories;
   final @Nullable Executor callbackExecutor;
   final boolean validateEagerly;
 
   Retrofit(okhttp3.Call.Factory callFactory, HttpUrl baseUrl,
-      List<Converter.Factory> converterFactories, List<CallAdapter.Factory> callAdapterFactories,
+      List<Converter.Factory> converterFactories, List<CallAdapter.Factory> callAdapterFactories, List<SuspendCallAdapter.Factory> suspendCallAdapterFactories,
       @Nullable Executor callbackExecutor, boolean validateEagerly) {
     this.callFactory = callFactory;
     this.baseUrl = baseUrl;
     this.converterFactories = converterFactories; // Copy+unmodifiable at call site.
     this.callAdapterFactories = callAdapterFactories; // Copy+unmodifiable at call site.
+    this.suspendCallAdapterFactories = suspendCallAdapterFactories; // Copy+unmodifiable at call site.
     this.callbackExecutor = callbackExecutor;
     this.validateEagerly = validateEagerly;
   }
@@ -395,6 +397,7 @@ public final class Retrofit {
     private HttpUrl baseUrl;
     private final List<Converter.Factory> converterFactories = new ArrayList<>();
     private final List<CallAdapter.Factory> callAdapterFactories = new ArrayList<>();
+    private final List<SuspendCallAdapter.Factory> suspendCallAdapterFactories = new ArrayList<>();
     private @Nullable Executor callbackExecutor;
     private boolean validateEagerly;
 
@@ -533,6 +536,11 @@ public final class Retrofit {
       return this;
     }
 
+    public Builder addSuspendCallAdapterFactory(SuspendCallAdapter.Factory factory) {
+      suspendCallAdapterFactories.add(checkNotNull(factory, "factory == null"));
+      return this;
+    }
+
     /**
      * The executor on which {@link Callback} methods are invoked when returning {@link Call} from
      * your service method.
@@ -600,7 +608,7 @@ public final class Retrofit {
       converterFactories.addAll(platform.defaultConverterFactories());
 
       return new Retrofit(callFactory, baseUrl, unmodifiableList(converterFactories),
-          unmodifiableList(callAdapterFactories), callbackExecutor, validateEagerly);
+          unmodifiableList(callAdapterFactories), unmodifiableList(suspendCallAdapterFactories), callbackExecutor, validateEagerly);
     }
   }
 }

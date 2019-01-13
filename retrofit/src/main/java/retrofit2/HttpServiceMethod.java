@@ -40,18 +40,8 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
     SuspendCallAdapter<ResponseT, ReturnT> suspendCallAdapter = null;
     Type responseType;
     if (requestFactory.isKotlinSuspendFunction) {
-      Type[] parameterTypes = method.getGenericParameterTypes();
-      Type continuationType = parameterTypes[parameterTypes.length - 1];
-      responseType = Utils.getParameterLowerBound(0, (ParameterizedType) continuationType);
-      if (getRawType(responseType) == Response.class && responseType instanceof ParameterizedType) {
-        // Unwrap the actual body type from Response<T>.
-        responseType = Utils.getParameterUpperBound(0, (ParameterizedType) responseType);
-        //noinspection unchecked
-        suspendCallAdapter = new ResponseSuspendCallAdapter(responseType);
-      } else {
-        //noinspection unchecked
-        suspendCallAdapter = new PlainSuspendedCallAdapter(responseType);
-      }
+      suspendCallAdapter = createSuspendCallAdapter(retrofit, method);
+      responseType = suspendCallAdapter.responseType();
     } else {
       callAdapter = createCallAdapter(retrofit, method);
       responseType = callAdapter.responseType();
@@ -75,6 +65,22 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
 
     okhttp3.Call.Factory callFactory = retrofit.callFactory;
     return new HttpServiceMethod<>(requestFactory, callFactory, callAdapter, suspendCallAdapter, responseConverter);
+  }
+
+  private static <ResponseT, ReturnT> SuspendCallAdapter<ResponseT, ReturnT> createSuspendCallAdapter(
+          Retrofit retrofit, Method method) {
+    Type[] parameterTypes = method.getGenericParameterTypes();
+    Type continuationType = parameterTypes[parameterTypes.length - 1];
+    Type responseType = Utils.getParameterLowerBound(0, (ParameterizedType) continuationType);
+    if (getRawType(responseType) == Response.class && responseType instanceof ParameterizedType) {
+      // Unwrap the actual body type from Response<T>.
+      responseType = Utils.getParameterUpperBound(0, (ParameterizedType) responseType);
+      //noinspection unchecked
+      return new ResponseSuspendCallAdapter(responseType);
+    } else {
+      //noinspection unchecked
+      return new PlainSuspendedCallAdapter(responseType);
+    }
   }
 
   private static <ResponseT, ReturnT> CallAdapter<ResponseT, ReturnT> createCallAdapter(

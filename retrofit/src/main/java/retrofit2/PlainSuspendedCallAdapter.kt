@@ -15,7 +15,10 @@
  */
 package retrofit2
 
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.lang.reflect.Type
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class PlainSuspendedCallAdapter<ResponseT, ReturnT>(private val responseType: Type) :
     SuspendCallAdapter<ResponseT, ReturnT> {
@@ -27,5 +30,27 @@ class PlainSuspendedCallAdapter<ResponseT, ReturnT>(private val responseType: Ty
     override suspend fun adapt(call: Call<ResponseT>): ReturnT {
         @Suppress("UNCHECKED_CAST")
         return call.await() as ReturnT
+    }
+}
+
+suspend fun <T> Call<T>.await(): T {
+    return suspendCancellableCoroutine { continuation ->
+        continuation.invokeOnCancellation {
+            cancel()
+        }
+        enqueue(object : Callback<T> {
+            override fun onResponse(call: Call<T>, response: Response<T>) {
+                if (response.isSuccessful) {
+                    // TODO handle nullability
+                    continuation.resume(response.body()!!)
+                } else {
+                    continuation.resumeWithException(HttpException(response))
+                }
+            }
+
+            override fun onFailure(call: Call<T>, t: Throwable) {
+                continuation.resumeWithException(t)
+            }
+        })
     }
 }
