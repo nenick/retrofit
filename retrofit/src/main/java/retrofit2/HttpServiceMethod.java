@@ -37,7 +37,7 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
   static <ResponseT, ReturnT> HttpServiceMethod<ResponseT, ReturnT> parseAnnotations(
       Retrofit retrofit, Method method, RequestFactory requestFactory) {
     CallAdapter<ResponseT, ReturnT> callAdapter = null;
-    boolean continuationWantsResponse = false;
+    SuspendCallAdapter<ResponseT, ReturnT> suspendCallAdapter = null;
     Type responseType;
     if (requestFactory.isKotlinSuspendFunction) {
       Type[] parameterTypes = method.getGenericParameterTypes();
@@ -46,7 +46,11 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
       if (getRawType(responseType) == Response.class && responseType instanceof ParameterizedType) {
         // Unwrap the actual body type from Response<T>.
         responseType = Utils.getParameterUpperBound(0, (ParameterizedType) responseType);
-        continuationWantsResponse = true;
+        //noinspection unchecked
+        suspendCallAdapter = new ResponseSuspendCallAdapter(responseType);
+      } else {
+        //noinspection unchecked
+        suspendCallAdapter = new PlainSuspendedCallAdapter(responseType);
       }
     } else {
       callAdapter = createCallAdapter(retrofit, method);
@@ -70,8 +74,7 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
         createResponseConverter(retrofit, method, responseType);
 
     okhttp3.Call.Factory callFactory = retrofit.callFactory;
-    return new HttpServiceMethod<>(requestFactory, callFactory, callAdapter,
-        continuationWantsResponse, responseConverter);
+    return new HttpServiceMethod<>(requestFactory, callFactory, callAdapter, suspendCallAdapter, responseConverter);
   }
 
   private static <ResponseT, ReturnT> CallAdapter<ResponseT, ReturnT> createCallAdapter(
@@ -100,20 +103,16 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
   private final okhttp3.Call.Factory callFactory;
   /** Null indicates a Kotlin coroutine service method. */
   private final @Nullable CallAdapter<ResponseT, ReturnT> callAdapter;
-  /**
-   * True if the coroutine continuation should receive the full Response object. Only meaningful
-   * when {@link #callAdapter} is null.
-   */
-  private final boolean continuationWantsResponse;
+  private final @Nullable SuspendCallAdapter<ResponseT, ReturnT> suspendCallAdapter;
   private final Converter<ResponseBody, ResponseT> responseConverter;
 
   private HttpServiceMethod(RequestFactory requestFactory, Call.Factory callFactory,
-      @Nullable CallAdapter<ResponseT, ReturnT> callAdapter, boolean continuationWantsResponse,
+      @Nullable CallAdapter<ResponseT, ReturnT> callAdapter, @Nullable SuspendCallAdapter<ResponseT, ReturnT> suspendCallAdapter,
       Converter<ResponseBody, ResponseT> responseConverter) {
     this.requestFactory = requestFactory;
     this.callFactory = callFactory;
     this.callAdapter = callAdapter;
-    this.continuationWantsResponse = continuationWantsResponse;
+    this.suspendCallAdapter = suspendCallAdapter;
     this.responseConverter = responseConverter;
   }
 
@@ -125,14 +124,9 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
       return callAdapter.adapt(call);
     }
 
-    //noinspection ConstantConditions Suspension functions always have arguments.
     Object continuation = args[args.length - 1];
-    if (continuationWantsResponse) {
-      //noinspection unchecked Guaranteed by parseAnnotations above.
-      return (ReturnT) KotlinExtensions.awaitResponse(call,
-          (Continuation<Response<ResponseT>>) continuation);
-    }
-    //noinspection unchecked Guaranteed by parseAnnotations above.
-    return (ReturnT) KotlinExtensions.await(call, (Continuation<ResponseT>) continuation);
+    // ConstantConditions Suspension functions always have arguments.
+    //noinspection ConstantConditions,unchecked Guaranteed by parseAnnotations above.
+    return (ReturnT) suspendCallAdapter.adapt(call, (Continuation<ReturnT>) continuation);
   }
 }
