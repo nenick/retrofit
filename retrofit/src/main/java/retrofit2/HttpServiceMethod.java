@@ -72,15 +72,8 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
     Type[] parameterTypes = method.getGenericParameterTypes();
     Type continuationType = parameterTypes[parameterTypes.length - 1];
     Type responseType = Utils.getParameterLowerBound(0, (ParameterizedType) continuationType);
-    if (getRawType(responseType) == Response.class && responseType instanceof ParameterizedType) {
-      // Unwrap the actual body type from Response<T>.
-      responseType = Utils.getParameterUpperBound(0, (ParameterizedType) responseType);
-      //noinspection unchecked
-      return new ResponseSuspendCallAdapter(responseType);
-    } else {
-      //noinspection unchecked
-      return new PlainSuspendedCallAdapter(responseType);
-    }
+    //noinspection unchecked
+    return (SuspendCallAdapter<ResponseT, ReturnT>) retrofit.suspendCallAdapter(responseType, method.getAnnotations());
   }
 
   private static <ResponseT, ReturnT> CallAdapter<ResponseT, ReturnT> createCallAdapter(
@@ -131,7 +124,6 @@ final class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<ReturnT>
     }
 
     Object continuation = args[args.length - 1];
-    // ConstantConditions Suspension functions always have arguments.
     //noinspection ConstantConditions,unchecked Guaranteed by parseAnnotations above.
     return (ReturnT) suspendCallAdapter.adapt(call, (Continuation<ReturnT>) continuation);
   }

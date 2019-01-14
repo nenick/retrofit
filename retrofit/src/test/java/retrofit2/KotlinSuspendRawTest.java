@@ -39,6 +39,7 @@ public final class KotlinSuspendRawTest {
   @Test public void raw() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
+        .addSuspendCallAdapterFactory(new DefaultSuspendCallAdapterFactory())
         .build();
     Service service = retrofit.create(Service.class);
 

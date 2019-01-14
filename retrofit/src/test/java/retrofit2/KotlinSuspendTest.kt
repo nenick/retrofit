@@ -47,6 +47,7 @@ class KotlinSuspendTest {
     val retrofit = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(ToStringConverterFactory())
+        .addSuspendCallAdapterFactory(DefaultSuspendCallAdapterFactory())
         .build()
     val example = retrofit.create(Service::class.java)
 
@@ -60,6 +61,7 @@ class KotlinSuspendTest {
     val retrofit = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(ToStringConverterFactory())
+        .addSuspendCallAdapterFactory(DefaultSuspendCallAdapterFactory())
         .build()
     val example = retrofit.create(Service::class.java)
 
@@ -77,6 +79,7 @@ class KotlinSuspendTest {
     val retrofit = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(ToStringConverterFactory())
+        .addSuspendCallAdapterFactory(DefaultSuspendCallAdapterFactory())
         .build()
     val example = retrofit.create(Service::class.java)
 
@@ -94,6 +97,7 @@ class KotlinSuspendTest {
     val retrofit = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(ToStringConverterFactory())
+        .addSuspendCallAdapterFactory(DefaultSuspendCallAdapterFactory())
         .build()
     val example = retrofit.create(Service::class.java)
 
@@ -108,6 +112,7 @@ class KotlinSuspendTest {
     val retrofit = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(ToStringConverterFactory())
+        .addSuspendCallAdapterFactory(DefaultSuspendCallAdapterFactory())
         .build()
     val example = retrofit.create(Service::class.java)
 
@@ -121,6 +126,7 @@ class KotlinSuspendTest {
     val retrofit = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(ToStringConverterFactory())
+        .addSuspendCallAdapterFactory(DefaultSuspendCallAdapterFactory())
         .build()
     val example = retrofit.create(Service::class.java)
 
@@ -138,6 +144,7 @@ class KotlinSuspendTest {
     val retrofit = Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(ToStringConverterFactory())
+        .addSuspendCallAdapterFactory(DefaultSuspendCallAdapterFactory())
         .build()
     val example = retrofit.create(Service::class.java)
 

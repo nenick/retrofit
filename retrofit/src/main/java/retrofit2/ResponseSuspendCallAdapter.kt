@@ -16,6 +16,7 @@
 package retrofit2
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -24,7 +25,7 @@ class ResponseSuspendCallAdapter<ResponseT, ReturnT>(private val responseType: T
     SuspendCallAdapter<ResponseT, Response<ReturnT>> {
 
     override fun responseType(): Type {
-        return responseType
+        return Utils.getParameterUpperBound(0, responseType as ParameterizedType)
     }
 
     override suspend fun adapt(call: Call<ResponseT>): Response<ReturnT> {

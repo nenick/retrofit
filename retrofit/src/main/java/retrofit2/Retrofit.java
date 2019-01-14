@@ -241,6 +241,23 @@ public final class Retrofit {
     throw new IllegalArgumentException(builder.toString());
   }
 
+  public SuspendCallAdapter<?, ?> suspendCallAdapter(Type returnType, Annotation[] annotations) {
+    for (int i = 0, count = suspendCallAdapterFactories.size(); i < count; i++) {
+      SuspendCallAdapter<?, ?> adapter = suspendCallAdapterFactories.get(i).get(returnType, annotations, this);
+      if (adapter != null) {
+        return adapter;
+      }
+    }
+    StringBuilder builder = new StringBuilder("Could not locate call adapter for ")
+            .append(returnType)
+            .append(".\n");
+    builder.append("  Tried:");
+    for (SuspendCallAdapter.Factory suspendCallAdapterFactory : suspendCallAdapterFactories) {
+      builder.append("\n   * ").append(suspendCallAdapterFactory.getClass().getName());
+    }
+    throw new IllegalArgumentException(builder.toString());
+  }
+
   /**
    * Returns an unmodifiable list of the factories tried when creating a
    * {@linkplain #requestBodyConverter(Type, Annotation[], Annotation[]) request body converter}, a

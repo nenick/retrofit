@@ -75,7 +75,7 @@ interface SuspendCallAdapter<R, T> {
              * Extract the upper bound of the generic parameter at `index` from `type`. For
              * example, index 1 of `Map<String, ? extends Runnable>` returns `Runnable`.
              */
-            protected fun getParameterUpperBound(index: Int, type: ParameterizedType): Type {
+            fun getParameterUpperBound(index: Int, type: ParameterizedType): Type {
                 return Utils.getParameterUpperBound(index, type)
             }
 
@@ -83,7 +83,7 @@ interface SuspendCallAdapter<R, T> {
              * Extract the raw class type from `type`. For example, the type representing
              * `List<? extends Runnable>` returns `List.class`.
              */
-            protected fun getRawType(type: Type): Class<*> {
+            fun getRawType(type: Type): Class<*> {
                 return Utils.getRawType(type)
             }
         }
